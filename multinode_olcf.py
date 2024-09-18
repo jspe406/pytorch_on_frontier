@@ -113,7 +113,7 @@ def main(save_every: int, total_epochs: int, batch_size: int, local_rank: int, w
     trainer = Trainer(model, train_data, optimizer, save_every, snapshot_path, local_rank, global_rank)
 
     trainer.train(total_epochs)
-
+    
     dist.destroy_process_group()
 
 
