@@ -33,4 +33,5 @@ mkdir -p ${MIOPEN_USER_DB_PATH}
 mkdir logs
 
 # Run script
+# Recommended to specify path/to/python
 srun -N1 -n1 -c7 --gpus-per-task=1 --gpu-bind=closest python3 -W ignore -u ./pytorch_nn.py 2000 10 --master_addr=$MASTER_ADDR --master_port=3442

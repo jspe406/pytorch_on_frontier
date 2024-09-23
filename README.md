@@ -38,7 +38,7 @@ Please avoid using torchrun. It is recommended to use srun to handle the task ma
 <br>
 First to get started with how to run PyTorch on Frontier we need to load the modules and create/activate the conda environment to be used:
 
-```
+```bash
 module load PrgEnv-gnu/8.5.0
 module load miniforge3/23.11.0-0
 module load rocm/6.0.0
@@ -47,42 +47,43 @@ module load craype-accel-amd-gfx90a
 
 
 Then create the Conda Environment: 
-```
+```bash
 conda create -p /path/to/my_env python=3.10
 source activate /path/to/my_env
 ```
 
 Once that is complete we can now install PyTorch: 
-```
+```bash
 pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/rocm6.0
-
+```
+```bash
 MPICC="cc -shared" pip install --no-cache-dir --no-binary=mpi4py mpi4py 
 
 # isn’t required in general (you can accomplish the same task using system environment variables), it acts as a nice convenience when needing to set various MPI parameters when using PyTorch for distributed training. 
 ```
 
 Clone the repository and move into the directory.
-```
+```bash
 git clone https://github.com/jspe406/pytorch_on_frontier.git
 
 cd pytorch_on_frontier
 ```
 
 A simple NN running on one node to demonstrate the use of PyTorch tensors and PyTorch's NN model
-```
+```bash
 # edit the file to add your Project_ID and path to env
 sbatch --export=NONE pytorch_nn_job.sl
 ```
 
-<span style="color: #ADD8E6;">Note: If you keep getting the `ModuleNotFoundError` it may be because the module was loaded twice in the environment. This is causes a path issue which may be resolved by explicitly specifying the path to pyton in the batch script file.</span>
+<span style="color: #ADD8E6;">Note: If you keep getting the `ModuleNotFoundError` it may be because the module was loaded twice in the environment. This causes a path issue which may be resolved by explicitly specifying the path to pyton in the batch script file.</span>
 
 It is good practice to always specify the path regardless. The path can be found using:
-```
+```bash
 echo "Python Environment Path: $(which python)"
 ```
 
 The output and error files are both found in the `logs` directory
-```
+```bash
 # Once the job runs succesfully the output file will show something like this
 
 Epoch [1000/10000], Loss: 0.5720
@@ -112,7 +113,7 @@ The following Environment Variables are required to run DDP:
 
 <span style="color: #ADD8E6;">Note: `nccl` backend is currently the fastest and highly recommended when using GPUs. This applies to both single-node and multi-node distributed training.</span>
 
-There are multiple ways to set up the environment variables one of which is within the python code. Check the `pytorch_ddp.py` file to see how the environment variables were initialized and used. To better understand why each one is important you can read [Pytorch Env Variables](https://pytorch.org/docs/stable/distributed.html#environment-variable-initialization) 
+There are multiple ways to set up the environment variables one of which is within the python code. Check the `pytorch_ddp.py` file to see how the environment variables were initialized and used. To better understand why each one is important, read [Pytorch Env Variables](https://pytorch.org/docs/stable/distributed.html#environment-variable-initialization) 
 
 Here is another an example function to set up the variables: 
 
@@ -122,15 +123,15 @@ Here is another an example function to set up the variables:
 </center>
 <br>
 
-```
+```bash
 # add your project id and path to `pytorch_ddp_job.sl`
-
 # run the job
 sbatch --export=NONE pytorch_ddp_job.sl
 ```
 
-Once it has completed running a snippet from the output file should look similar to this:
-```
+```bash
+# Once it has completed running, a snippet from the output file should look similar to this:
+
 [GPU13] Epoch 1 | Batchsize: 32 | Steps: 4
 Epoch 0 | Training snapshot saved at snapshot.pt
 [GPU2] Epoch 1 | Batchsize: 32 | Steps: 4
@@ -165,7 +166,7 @@ Epoch 0 | Training snapshot saved at snapshot.pt
 ```
 This is running Pytorch to train on two nodes, 16 GPUs for 2000 epochs and saves the training snapshot. If the script is run a second time it will pick up from the saved snapshot and continue training.
 
-Here we can see for each GPU on the nodes (total of 16), one epoch was run. Here it is easier to visualize that the `GLOBAL RANK` or `RANK` is the number assiged to the GPU relative to the total GPUs across all nodes [0-15] and the `LOCAL RANK` would be relative to gpus residing on a single node [0-7]
+Here we can see for each GPU on the nodes (total of 16), one epoch was run. Here it is easier to visualize that the `GLOBAL RANK` or `RANK` is the number assiged to the GPU relative to the total GPUs across all nodes [0-15] and the `LOCAL RANK` would be relative to GPUs residing on a single node [0-7]
 
 For further information or tips the following resources have been listed. If you would like to see more examples that have been run on frontier, the following [ai-training-series](https://github.com/olcf/ai-training-series/tree/main/ai_at_scale_part_2) is a great resource with code examples.
 
