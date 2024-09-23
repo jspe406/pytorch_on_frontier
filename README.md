@@ -74,9 +74,16 @@ A simple NN running on one node to demonstrate the use of PyTorch tensors and Py
 sbatch --export=NONE pytorch_nn_job.sl
 ```
 
+<span style="color: #ADD8E6;">Note: If you keep getting the `ModuleNotFoundError` it may be because the module was loaded twice in the environment. This is causes a path issue which may be resolved by explicitly specifying the path to pyton in the batch script file.</span>
+
+It is good practice to always specify the path regardless. The path can be found using:
+```
+echo "Python Environment Path: $(which python)"
+```
+
 The output and error files are both found in the `logs` directory
 ```
-# the output file will show something like this
+# Once the job runs succesfully the output file will show something like this
 
 Epoch [1000/10000], Loss: 0.5720
 Epoch [2000/10000], Loss: 0.3862
@@ -89,12 +96,6 @@ Epoch [8000/10000], Loss: 0.1193
 Epoch [9000/10000], Loss: 0.1095
 Epoch [10000/10000], Loss: 0.1016
 Accuracy: 99.10%
-```
-If you keep getting the `ModuleNotFoundError` it may be because the module was loaded twice in the environment. This is causes a path issue which may be resolved by explicitly specifying the path to pyton in the batch script file.
-
-It is good practice to always specify the path regardless. The path can be found using:
-```
-echo "Python Environment Path: $(which python)"
 ```
 
 ## Setup DDP on Frontier
@@ -111,7 +112,9 @@ The following Environment Variables are required to run DDP:
 
 <span style="color: #ADD8E6;">Note: `nccl` backend is currently the fastest and highly recommended when using GPUs. This applies to both single-node and multi-node distributed training.</span>
 
-There are multiple ways to set up the environment variables one of which is within the python code. Here is an example: 
+There are multiple ways to set up the environment variables one of which is within the python code. Check the `pytorch_ddp.py` file to see how the environment variables were initialized and used. To better understand why each one is important you can read [Pytorch Env Variables](https://pytorch.org/docs/stable/distributed.html#environment-variable-initialization) 
+
+Here is another an example function to set up the variables: 
 
 <br>
 <center>
@@ -120,9 +123,6 @@ There are multiple ways to set up the environment variables one of which is with
 <br>
 
 ```
-# clear the log files
-rm -r logs/
-
 # add your project id and path to `pytorch_ddp_job.sl`
 
 # run the job
@@ -165,7 +165,7 @@ Epoch 0 | Training snapshot saved at snapshot.pt
 ```
 This is running Pytorch to train on two nodes, 16 GPUs for 2000 epochs and saves the training snapshot. If the script is run a second time it will pick up from the saved snapshot and continue training.
 
-Here we can see for each gpu on the nodes (total of 16) one epoch was run. Here it is easier to understand that the `GLOBAL RANK` or just `RANK` is the number assiged to the gpu relative to the total gpus across all nodes [0-15] and the `LOCAL RANK` would be relative to gpus residing on a single node [0-7]
+Here we can see for each GPU on the nodes (total of 16), one epoch was run. Here it is easier to visualize that the `GLOBAL RANK` or `RANK` is the number assiged to the GPU relative to the total GPUs across all nodes [0-15] and the `LOCAL RANK` would be relative to gpus residing on a single node [0-7]
 
 For further information or tips the following resources have been listed. If you would like to see more examples that have been run on frontier, the following [ai-training-series](https://github.com/olcf/ai-training-series/tree/main/ai_at_scale_part_2) is a great resource with code examples.
 
@@ -177,6 +177,8 @@ This video in the PyTorch documentation also explains and demonstrates the diffe
 [PyTorch On Frontier - OLCF Docs](https://docs.olcf.ornl.gov/software/python/pytorch_frontier.html)
 
 [Conda Basics - OLCF Docs](https://docs.olcf.ornl.gov/software/python/conda_basics.html)
+
+[Conda - Best Practices - OLCF Docs](https://docs.olcf.ornl.gov/software/python/index.html#best-practices)
 
 [Torch Environment Variables](https://pytorch.org/docs/stable/torch_environment_variables.html)
 
