@@ -65,7 +65,7 @@ class Trainer:
         loss.backward()
         self.optimizer.step()
 
-    def _run_epoch(self, epoch):
+    def _run_epoch(self, epoch, max_epochs):
         b_sz = len(next(iter(self.train_data))[0])
         print(f"[GPU{self.global_rank}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
         self.train_data.sampler.set_epoch(epoch)
@@ -73,6 +73,7 @@ class Trainer:
             source = source.to(self.local_rank)
             targets = targets.to(self.local_rank)
             self._run_batch(source, targets)
+
 
     def _save_snapshot(self, epoch):
         snapshot = {
@@ -84,10 +85,9 @@ class Trainer:
 
     def train(self, max_epochs: int):
         for epoch in range(self.epochs_run, max_epochs):
-            self._run_epoch(epoch)
+            self._run_epoch(epoch, max_epochs)
             if self.local_rank == 0 and epoch % self.save_every == 0:
                 self._save_snapshot(epoch)
-
 
 def load_train_objs():
     train_set = MyTrainDataset(2048)  # load your dataset
@@ -113,7 +113,7 @@ def main(save_every: int, total_epochs: int, batch_size: int, local_rank: int, w
     trainer = Trainer(model, train_data, optimizer, save_every, snapshot_path, local_rank, global_rank)
 
     trainer.train(total_epochs)
-    
+
     dist.destroy_process_group()
 
 

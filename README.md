@@ -32,11 +32,11 @@ For further information check out the documentation: [PyTorch Distributed Traini
 ## Basics of running PyTorch on Frontier
 
 <br>
-Please avoid using torchrun if possible. It is recommended to use srun to handle the task mapping instead. On Frontier, the use of torchrun significantly impacts the performance of your code. Initial tests have shown that a script which normally runs on order of 10 seconds can take up to 10 minutes to run when using torchrun – over an order of magnitude worse! Additionally, nesting torchrun within srun (i.e., srun torchrun ...) does not help, as the two task managers will clash.
+Please avoid using torchrun. It is recommended to use srun to handle the task mapping instead. On Frontier, the use of torchrun significantly impacts the performance of your code. Initial tests have shown that a script which normally runs on order of 10 seconds can take up to 10 minutes to run when using torchrun – over an order of magnitude worse! Additionally, nesting torchrun within srun (i.e., srun torchrun ...) does not help, as the two task managers will clash.
 <br>
 
 <br>
-First before we get started with how to run PyTorch on Frontier we need to load the modules and create/activate the conda environment to be used:
+First to get started with how to run PyTorch on Frontier we need to load the modules and create/activate the conda environment to be used:
 
 ```
 module load PrgEnv-gnu/8.5.0
@@ -68,7 +68,7 @@ git clone https://github.com/jspe406/pytorch_on_frontier.git
 cd pytorch_on_frontier
 ```
 
-A simple NN running on one node to demonstrate the use of PyTorch tensor and PyTorch's NN model
+A simple NN running on one node to demonstrate the use of PyTorch tensors and PyTorch's NN model
 ```
 # edit the file to add your Project_ID and path to env
 sbatch --export=NONE pytorch_nn_job.sl
@@ -76,8 +76,7 @@ sbatch --export=NONE pytorch_nn_job.sl
 
 The output and error files are both found in the `logs` directory
 ```
-ls logs/ # will show the files inside of logs
-vim logs/<file_name> # will show content
+# the output file will show something like this
 
 Epoch [1000/10000], Loss: 0.5720
 Epoch [2000/10000], Loss: 0.3862
@@ -91,7 +90,12 @@ Epoch [9000/10000], Loss: 0.1095
 Epoch [10000/10000], Loss: 0.1016
 Accuracy: 99.10%
 ```
-The more epochs that are run the more precise the model (up to a certain point)
+If you keep getting the `ModuleNotFoundError` it may be because the module was loaded twice in the environment. This is causes a path issue which may be resolved by explicitly specifying the path to pyton in the batch script file.
+
+It is good practice to always specify the path regardless. The path can be found using:
+```
+echo "Python Environment Path: $(which python)"
+```
 
 ## Setup DDP on Frontier
 In this example we are going to run our Distributed Data Parallel example using `pytorch_ddp_job.sl` and `pytorch_ddp.py`.
@@ -105,11 +109,13 @@ The following Environment Variables are required to run DDP:
 
 - `RANK` - required; can be set either here, or in a call to init function
 
+<span style="color: #ADD8E6;">Note: `nccl` backend is currently the fastest and highly recommended when using GPUs. This applies to both single-node and multi-node distributed training.</span>
+
 There are multiple ways to set up the environment variables one of which is within the python code. Here is an example: 
 
 <br>
 <center>
-<img src="images/env_variables.png" style="width:75%">
+<img src="images/env_variables.jpg" style="width:75%">
 </center>
 <br>
 
@@ -118,7 +124,6 @@ There are multiple ways to set up the environment variables one of which is with
 rm -r logs/
 
 # add your project id and path to `pytorch_ddp_job.sl`
-vim pytorch_ddp_job.sl
 
 # run the job
 sbatch --export=NONE pytorch_ddp_job.sl
@@ -158,9 +163,11 @@ Epoch 0 | Training snapshot saved at snapshot.pt
 [GPU14] Epoch 1 | Batchsize: 32 | Steps: 4
 [GPU4] Epoch 1 | Batchsize: 32 | Steps: 4
 ```
-Here we can see for each gpu on the two nodes (total of 16) epoch 1 was run. Here it is easier to understand that the `global rank` is the number assiged to the gpu relative to the total gpus across all nodes [0-15] and the `local rank` would be relative to gpus residing on a single node [0-7]
+This is running Pytorch to train on two nodes, 16 GPUs for 2000 epochs and saves the training snapshot. If the script is run a second time it will pick up from the saved snapshot and continue training.
 
-For further information or tips the following resources have been listed. If you would like to see more examples that have been run on frontier, the following [ai-training-series](https://github.com/olcf/ai-training-series/tree/main/ai_at_scale_part_2) is a great resource with videos and code examples.
+Here we can see for each gpu on the nodes (total of 16) one epoch was run. Here it is easier to understand that the `GLOBAL RANK` or just `RANK` is the number assiged to the gpu relative to the total gpus across all nodes [0-15] and the `LOCAL RANK` would be relative to gpus residing on a single node [0-7]
+
+For further information or tips the following resources have been listed. If you would like to see more examples that have been run on frontier, the following [ai-training-series](https://github.com/olcf/ai-training-series/tree/main/ai_at_scale_part_2) is a great resource with code examples.
 
 This video in the PyTorch documentation also explains and demonstrates the difference between the global and local ranks and how to run a multinode job using DDP [Multinode Training](https://pytorch.org/tutorials/intermediate/ddp_series_multinode.html)
 

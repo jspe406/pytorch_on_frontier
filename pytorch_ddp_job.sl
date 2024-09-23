@@ -1,11 +1,10 @@
 #!/bin/bash
 
-##!/bin/bash
-#SBATCH -A <Project_ID>
-#SBATCH -J ddp_test
-#SBATCH -o logs/ddp_test-%j.o
-#SBATCH -e logs/ddp_test-%j.e
-#SBATCH -t 00:05:00
+#SBATCH -A <project_id>
+#SBATCH -J pytorch_ddp
+#SBATCH -o logs/pytorch_tutorial-%j.o
+#SBATCH -e logs/pytorch_tutorial-%j.e
+#SBATCH -t 00:20:00
 #SBATCH -p batch
 #SBATCH -N 2
 
@@ -20,13 +19,10 @@ module load craype-accel-amd-gfx90a
 module load miniforge3/23.11.0-0
 
 # Activate your environment
-source activate /path/to/my_env
+source activate path/to/my_env
 
 # Get address of head node
 export MASTER_ADDR=$(hostname -i)
-
-# Sets the number of visibile GPUs
-export ROCR_DEVICES_VISIBLE = 0,1,2,3,4,5,6,7
 
 # Needed to bypass MIOpen, Disk I/O Errors
 export MIOPEN_USER_DB_PATH="/tmp/my-miopen-cache"
@@ -34,8 +30,8 @@ export MIOPEN_CUSTOM_CACHE_DIR=${MIOPEN_USER_DB_PATH}
 rm -rf ${MIOPEN_USER_DB_PATH}
 mkdir -p ${MIOPEN_USER_DB_PATH}
 
-rm -r logs
 mkdir logs
 
 # Run script
-srun -N2 -n16 -c7 --gpus-per-task=1 --gpu-bind=closest python3 -W ignore -u ./multinode_olcf.py 2000 10 --master_addr=$MASTER_ADDR --master_port=3442
+# You may need to explicitly indicate the python path
+srun -N2 -n16 -c7 --gpus-per-task=1 --gpu-bind=closest python3 -W ignore -u ./pytorch_ddp.py 2000 10 --master_addr=$MASTER_ADDR --master_port=3442
